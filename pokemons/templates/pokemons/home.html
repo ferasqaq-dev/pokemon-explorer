@@ -27,7 +27,9 @@
             <div class="card-body">
               <span class="badge bg-secondary mb-2">#{{ pokemon.id }}</span>
               <h5 class="card-title fw-bold">{{ pokemon.name }}</h5>
-              <a href="#" class="btn btn-primary btn-sm w-100 mt-2"
+              <a
+                href="{% url 'pokemon_detail' pokemon.id %}"
+                class="btn btn-primary btn-sm w-100 mt-2"
                 >View Details</a
               >
             </div>

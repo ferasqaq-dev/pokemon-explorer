@@ -22,3 +22,26 @@ def home_view(request):
         'pokemons': pokemon_list
     }
     return render(request, 'pokemons/home.html', context)
+
+def pokemon_detail_view(request, pokemon_id):
+    url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_id}/"
+    response = requests.get(url).json()
+    
+    name = response['name'].capitalize()
+    height = response['height']
+    weight = response['weight']
+    image = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{pokemon_id}.png"
+    
+    types = [t['type']['name'].capitalize() for t in response['types']]
+    abilities = [a['ability']['name'].capitalize() for a in response['abilities']]
+    
+    context = {
+        'id': pokemon_id,
+        'name': name,
+        'height': height,
+        'weight': weight,
+        'image': image,
+        'types': types,
+        'abilities': abilities,
+    }
+    return render(request, 'pokemons/detail.html', context)
