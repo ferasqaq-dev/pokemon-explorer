@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Login - Pokémon Explorer</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body
+    class="bg-light d-flex align-items-center justify-content-center"
+    style="height: 100vh"
+  >
+    <div
+      class="card p-4 shadow-sm border-0"
+      style="width: 100%; max-width: 400px"
+    >
+      <h2 class="text-center mb-4 fw-bold text-success">Login</h2>
+      <form method="POST">
+        {% csrf_token %} {{ form.as_p }}
+        <button type="submit" class="btn btn-success w-100 mt-3">Login</button>
+      </form>
+      <p class="text-center mt-3 mb-0">
+        Don't have an account? <a href="{% url 'register' %}">Register here</a>
+      </p>
+    </div>
+  </body>
+</html>

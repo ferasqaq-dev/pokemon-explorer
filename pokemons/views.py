@@ -1,5 +1,7 @@
 import requests
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 
 def home_view(request):
     url = "https://pokeapi.co/api/v2/pokemon?limit=20" #Fetching the first 20 Pokemon from the PokeAPI
@@ -45,3 +47,30 @@ def pokemon_detail_view(request, pokemon_id):
         'abilities': abilities,
     }
     return render(request, 'pokemons/detail.html', context)
+
+def register_view(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save() 
+            login(request, user)
+            return redirect('home')
+    else:
+        form = UserCreationForm()
+    return render(request, 'pokemons/register.html', {'form': form})
+
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('home')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'pokemons/login.html', {'form': form})
+
+def logout_view(request):
+    if request.method == 'POST' or request.method == 'GET':
+        logout(request)
+    return redirect('home')
