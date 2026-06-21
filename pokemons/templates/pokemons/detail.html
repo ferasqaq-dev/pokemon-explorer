@@ -28,6 +28,19 @@
           <div class="col-md-7">
             <div class="card-body p-4">
               <span class="badge bg-primary fs-6 mb-2">#{{ id }}</span>
+              {% if user.is_authenticated %} {% if is_favorite %}
+              <a
+                href="{% url 'toggle_favorite' id %}?name={{ name }}"
+                class="btn btn-danger btn-sm mb-3"
+                >Remove from Favorites</a
+              >
+              {% else %}
+              <a
+                href="{% url 'toggle_favorite' id %}?name={{ name }}"
+                class="btn btn-outline-danger btn-sm mb-3"
+                >Add to Favorites</a
+              >
+              {% endif %} {% endif %}
               <h1 class="card-title fw-bold text-dark mb-4">{{ name }}</h1>
 
               <table class="table table-borderless fs-5">

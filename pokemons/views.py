@@ -2,28 +2,32 @@ import requests
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.decorators import login_required
+
+from pokemons.models import FavoritePokemon
 
 def home_view(request):
-    url = "https://pokeapi.co/api/v2/pokemon?limit=20" #Fetching the first 20 Pokemon from the PokeAPI
+    url = "https://pokeapi.co/api/v2/pokemon?limit=20"
     response = requests.get(url).json()
     
-    pokemon_list = []
+    user_favs = []
+    if request.user.is_authenticated:
+        user_favs = list(FavoritePokemon.objects.filter(user=request.user).values_list('pokemon_id', flat=True))
     
+    pokemon_list = []
     for result in response['results']:
         name = result['name']
-        pokemon_id = result['url'].split('/')[-2]
-        image_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{pokemon_id}.png" #Fetching the image of the Pokemon using its ID from the PokeAPI's sprite repository
+        pokemon_id = int(result['url'].split('/')[-2])
+        image_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{pokemon_id}.png"
         
         pokemon_list.append({
             'id': pokemon_id,
             'name': name.capitalize(),
-            'image': image_url
+            'image': image_url,
+            'is_favorite': pokemon_id in user_favs
         })
 
-    context = {
-        'pokemons': pokemon_list
-    }
-    return render(request, 'pokemons/home.html', context)
+    return render(request, 'pokemons/home.html', {'pokemons': pokemon_list})
 
 def pokemon_detail_view(request, pokemon_id):
     url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_id}/"
@@ -33,18 +37,16 @@ def pokemon_detail_view(request, pokemon_id):
     height = response['height']
     weight = response['weight']
     image = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{pokemon_id}.png"
-    
     types = [t['type']['name'].capitalize() for t in response['types']]
     abilities = [a['ability']['name'].capitalize() for a in response['abilities']]
     
+    is_favorite = False
+    if request.user.is_authenticated:
+        is_favorite = FavoritePokemon.objects.filter(user=request.user, pokemon_id=pokemon_id).exists()
+    
     context = {
-        'id': pokemon_id,
-        'name': name,
-        'height': height,
-        'weight': weight,
-        'image': image,
-        'types': types,
-        'abilities': abilities,
+        'id': pokemon_id, 'name': name, 'height': height, 'weight': weight,
+        'image': image, 'types': types, 'abilities': abilities, 'is_favorite': is_favorite
     }
     return render(request, 'pokemons/detail.html', context)
 
@@ -74,3 +76,18 @@ def logout_view(request):
     if request.method == 'POST' or request.method == 'GET':
         logout(request)
     return redirect('home')
+
+@login_required(login_url='login')
+def toggle_favorite_view(request, pokemon_id):
+    pokemon_name = request.GET.get('name', 'Pokemon')
+    
+    fav_exists = FavoritePokemon.objects.filter(user=request.user, pokemon_id=pokemon_id).exists()
+    
+    if fav_exists:
+        FavoritePokemon.objects.filter(user=request.user, pokemon_id=pokemon_id).delete()
+    else:
+        FavoritePokemon.objects.create(user=request.user, pokemon_id=pokemon_id, pokemon_name=pokemon_name)
+    
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
+
+    
