@@ -9,7 +9,9 @@ from django.http import JsonResponse
 from pokemons.models import FavoritePokemon
 
 def home_view(request):
-    url = "https://pokeapi.co/api/v2/pokemon?limit=20"
+    query_name = request.GET.get('search', '').strip().lower()
+    
+    url = "https://pokeapi.co/api/v2/pokemon?limit=100"
     response = requests.get(url).json()
     
     user_favs = []
@@ -19,6 +21,10 @@ def home_view(request):
     pokemon_list = []
     for result in response['results']:
         name = result['name']
+        
+        if query_name and query_name not in name:
+            continue
+            
         pokemon_id = int(result['url'].split('/')[-2])
         image_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{pokemon_id}.png"
         
@@ -29,7 +35,11 @@ def home_view(request):
             'is_favorite': pokemon_id in user_favs
         })
 
-    return render(request, 'pokemons/home.html', {'pokemons': pokemon_list})
+    context = {
+        'pokemons': pokemon_list,
+        'query_name': request.GET.get('search', '')
+    }
+    return render(request, 'pokemons/home.html', context)
 
 def pokemon_detail_view(request, pokemon_id):
     url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_id}/"
