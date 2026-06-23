@@ -56,13 +56,17 @@
               {% if user.is_authenticated %} {% if pokemon.is_favorite %}
               <a
                 href="{% url 'toggle_favorite' pokemon.id %}?name={{ pokemon.name }}"
-                class="btn btn-danger btn-sm w-100"
+                class="btn btn-danger btn-sm w-100 fav-btn"
+                data-id="{{ pokemon.id }}"
+                data-name="{{ pokemon.name }}"
                 >Remove Favorite</a
               >
               {% else %}
               <a
                 href="{% url 'toggle_favorite' pokemon.id %}?name={{ pokemon.name }}"
-                class="btn btn-outline-danger btn-sm w-100"
+                class="btn btn-outline-danger btn-sm w-100 fav-btn"
+                data-id="{{ pokemon.id }}"
+                data-name="{{ pokemon.name }}"
                 >Add Favorite</a
               >
               {% endif %} {% endif %}
@@ -79,5 +83,32 @@
         {% endfor %}
       </div>
     </div>
+    <script>
+      document.querySelectorAll(".fav-btn").forEach((button) => {
+        button.addEventListener("click", function (event) {
+          event.preventDefault();
+
+          const url = this.getAttribute("href");
+          const pokemonId = this.getAttribute("data-id");
+          const pokemonName = this.getAttribute("data-name");
+          const btn = this;
+
+          fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.status === "success") {
+                if (data.action === "added") {
+                  btn.className = "btn btn-danger btn-sm w-100 fav-btn";
+                  btn.innerHTML = "Remove Favorite";
+                } else if (data.action === "removed") {
+                  btn.className = "btn btn-outline-danger btn-sm w-100 fav-btn";
+                  btn.innerHTML = "Add Favorite";
+                }
+              }
+            })
+            .catch((error) => console.error("Error:", error));
+        });
+      });
+    </script>
   </body>
 </html>

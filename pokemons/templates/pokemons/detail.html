@@ -31,13 +31,13 @@
               {% if user.is_authenticated %} {% if is_favorite %}
               <a
                 href="{% url 'toggle_favorite' id %}?name={{ name }}"
-                class="btn btn-danger btn-sm mb-3"
+                class="btn btn-danger btn-sm mb-3 fav-detail-btn"
                 >Remove from Favorites</a
               >
               {% else %}
               <a
                 href="{% url 'toggle_favorite' id %}?name={{ name }}"
-                class="btn btn-outline-danger btn-sm mb-3"
+                class="btn btn-outline-danger btn-sm mb-3 fav-detail-btn"
                 >Add to Favorites</a
               >
               {% endif %} {% endif %}
@@ -79,4 +79,31 @@
       </div>
     </div>
   </body>
+  <script>
+    const favBtn = document.querySelector(".fav-detail-btn");
+    if (favBtn) {
+      favBtn.addEventListener("click", function (event) {
+        event.preventDefault();
+
+        const url = this.getAttribute("href");
+        const btn = this;
+
+        fetch(url)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.status === "success") {
+              if (data.action === "added") {
+                btn.className = "btn btn-danger btn-sm mb-3 fav-detail-btn";
+                btn.innerHTML = "Remove from Favorites";
+              } else if (data.action === "removed") {
+                btn.className =
+                  "btn btn-outline-danger btn-sm mb-3 fav-detail-btn";
+                btn.innerHTML = "Add to Favorites";
+              }
+            }
+          })
+          .catch((error) => console.error("Error:", error));
+      });
+    }
+  </script>
 </html>

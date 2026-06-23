@@ -3,6 +3,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+
 
 from pokemons.models import FavoritePokemon
 
@@ -85,9 +87,11 @@ def toggle_favorite_view(request, pokemon_id):
     
     if fav_exists:
         FavoritePokemon.objects.filter(user=request.user, pokemon_id=pokemon_id).delete()
+        action = "removed"
     else:
         FavoritePokemon.objects.create(user=request.user, pokemon_id=pokemon_id, pokemon_name=pokemon_name)
+        action = "added"
     
-    return redirect(request.META.get('HTTP_REFERER', 'home'))
+    return JsonResponse({"status": "success", "action": action})
 
     
