@@ -4,15 +4,24 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.core.cache import cache
 
 
 from pokemons.models import FavoritePokemon
 
 def home_view(request):
     query_name = request.GET.get('search', '').strip().lower()
+
+    cache_key = 'pokeapi_all_pokemon_limit_100'
+    response = cache.get(cache_key)
+    if not response:
+        url = "https://pokeapi.co/api/v2/pokemon?limit=100"
+        try:
+            response = requests.get(url).json()
+            cache.set(cache_key, response, timeout=300)
+        except Exception:
+            response = {'results': []}
     
-    url = "https://pokeapi.co/api/v2/pokemon?limit=100"
-    response = requests.get(url).json()
     
     user_favs = []
     if request.user.is_authenticated:
