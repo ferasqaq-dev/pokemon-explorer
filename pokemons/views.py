@@ -126,4 +126,20 @@ def toggle_favorite_view(request, pokemon_id):
     
     return JsonResponse({"status": "success", "action": action})
 
+@login_required(login_url='login')
+def favorites_list_view(request):
+    fav_objects = FavoritePokemon.objects.filter(user=request.user)
+    
+    pokemons = []
+    for fav in fav_objects:
+        image_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{fav.pokemon_id}.png"
+        pokemons.append({
+            'id': fav.pokemon_id,
+            'name': fav.pokemon_name,
+            'image': image_url,
+            'is_favorite': True
+        })
+        
+    return render(request, 'pokemons/favorites.html', {'pokemons': pokemons})
+
     
