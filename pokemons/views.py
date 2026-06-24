@@ -11,24 +11,27 @@ from pokemons.models import FavoritePokemon
 
 def home_view(request):
     query_name = request.GET.get('search', '').strip().lower()
-
-    cache_key = 'pokeapi_all_pokemon_limit_100'
+    
+    offset = request.GET.get('offset', '0')
+    limit = 20
+    cache_key = f'pokeapi_offset_{offset}_limit_{limit}'
     response = cache.get(cache_key)
+    
     if not response:
-        url = "https://pokeapi.co/api/v2/pokemon?limit=100"
+        url = "https://pokeapi.co/api/v2/pokemon?limit=150" if query_name else f"https://pokeapi.co/api/v2/pokemon?limit={limit}&offset={offset}"
         try:
             response = requests.get(url).json()
-            cache.set(cache_key, response, timeout=300)
+            if not query_name:
+                cache.set(cache_key, response, timeout=300)
         except Exception:
             response = {'results': []}
-    
-    
+
     user_favs = []
     if request.user.is_authenticated:
         user_favs = list(FavoritePokemon.objects.filter(user=request.user).values_list('pokemon_id', flat=True))
     
     pokemon_list = []
-    for result in response['results']:
+    for result in response.get('results', []):
         name = result['name']
         
         if query_name and query_name not in name:
@@ -44,10 +47,20 @@ def home_view(request):
             'is_favorite': pokemon_id in user_favs
         })
 
+    current_offset = int(offset)
+    next_offset = current_offset + limit if response.get('next') else None
+    prev_offset = current_offset - limit if current_offset >= limit else None
+
     context = {
         'pokemons': pokemon_list,
-        'query_name': request.GET.get('search', '')
+        'query_name': request.GET.get('search', ''),
+        'next_offset': next_offset,
+        'prev_offset': prev_offset,
     }
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'pokemons/pokemon_list_partial.html', context)
+        
     return render(request, 'pokemons/home.html', context)
 
 def pokemon_detail_view(request, pokemon_id):

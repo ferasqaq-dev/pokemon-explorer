@@ -114,86 +114,60 @@
         </div>
       </div>
 
-      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-        {% for pokemon in pokemons %}
-        <div class="col">
-          <div class="card h-100 poke-card shadow-sm">
-            <div class="img-container">
-              <img
-                src="{{ pokemon.image }}"
-                alt="{{ pokemon.name }}"
-                class="img-fluid"
-                style="max-height: 120px"
-              />
-            </div>
-            <div
-              class="card-body d-flex flex-column justify-content-between p-4"
-            >
-              <div>
-                <span class="text-muted small fw-bold">#{{ pokemon.id }}</span>
-                <h5 class="card-title fw-bold text-dark mb-3">
-                  {{ pokemon.name }}
-                </h5>
-              </div>
-              <div class="d-flex flex-column gap-2 mt-2">
-                {% if user.is_authenticated %} {% if pokemon.is_favorite %}
-                <a
-                  href="{% url 'toggle_favorite' pokemon.id %}?name={{ pokemon.name }}"
-                  class="btn btn-danger btn-sm w-100 fav-btn py-2 rounded-pill"
-                  ><i class="fa-solid fa-heart me-1"></i> Remove Favorite</a
-                >
-                {% else %}
-                <a
-                  href="{% url 'toggle_favorite' pokemon.id %}?name={{ pokemon.name }}"
-                  class="btn btn-outline-danger btn-sm w-100 fav-btn py-2 rounded-pill"
-                  ><i class="fa-regular fa-heart me-1"></i> Add Favorite</a
-                >
-                {% endif %} {% endif %}
-                <a
-                  href="{% url 'pokemon_detail' pokemon.id %}"
-                  class="btn btn-outline-secondary btn-sm w-100 py-2 rounded-pill"
-                  >View Details <i class="fa-solid fa-arrow-right ms-1"></i
-                ></a>
-              </div>
-            </div>
-          </div>
-        </div>
-        {% empty %}
-        <div class="col-12 text-center my-5">
-          <i class="fa-regular fa-face-frown fs-1 text-muted mb-3"></i>
-          <p class="text-muted fs-5">No Pokémon found matching your search.</p>
-        </div>
-        {% endfor %}
+      <div id="main-content-container">
+        {% include 'pokemons/pokemon_list_partial.html' %}
       </div>
     </div>
 
     <script>
-      document.querySelectorAll(".fav-btn").forEach((button) => {
-        button.addEventListener("click", function (event) {
-          event.preventDefault();
-          const url = this.getAttribute("href");
-          const btn = this;
+      const container = document.getElementById("main-content-container");
 
-          fetch(url)
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.status === "success") {
-                if (data.action === "added") {
-                  btn.className =
-                    "btn btn-danger btn-sm w-100 fav-btn py-2 rounded-pill";
-                  btn.innerHTML =
-                    '<i class="fa-solid fa-heart me-1"></i> Remove Favorite';
-                } else if (data.action === "removed") {
-                  btn.className =
-                    "btn btn-outline-danger btn-sm w-100 fav-btn py-2 rounded-pill";
-                  btn.innerHTML =
-                    '<i class="fa-regular fa-heart me-1"></i> Add Favorite';
+      function initAppEvents() {
+        document.querySelectorAll(".fav-btn").forEach((button) => {
+          button.onclick = function (event) {
+            event.preventDefault();
+            const url = this.getAttribute("href");
+            const btn = this;
+
+            fetch(url)
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.status === "success") {
+                  if (data.action === "added") {
+                    btn.className =
+                      "btn btn-danger btn-sm w-100 fav-btn py-2 rounded-pill";
+                    btn.innerHTML =
+                      '<i class="fa-solid fa-heart me-1"></i> Remove Favorite';
+                  } else if (data.action === "removed") {
+                    btn.className =
+                      "btn btn-outline-danger btn-sm w-100 fav-btn py-2 rounded-pill";
+                    btn.innerHTML =
+                      '<i class="fa-regular fa-heart me-1"></i> Add Favorite';
+                  }
                 }
-              }
-            })
-            .catch((error) => console.error("Error:", error));
+              })
+              .catch((err) => console.error(err));
+          };
         });
-      });
+
+        document.querySelectorAll(".page-link-ajax").forEach((link) => {
+          link.onclick = function (event) {
+            event.preventDefault();
+            const url = this.getAttribute("href");
+
+            fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+              .then((response) => response.text())
+              .then((html) => {
+                container.innerHTML = html;
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                initAppEvents();
+              })
+              .catch((err) => console.error(err));
+          };
+        });
+      }
+
+      initAppEvents();
     </script>
   </body>
 </html>
