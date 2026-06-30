@@ -1,0 +1,109 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pokémon Explorer</title>
+    <style>
+      /* كود الـ CSS مفصول ومنظم هنا لمنع الـ Inlining وحل مشكلة الفورمات */
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f5f7fa;
+        margin: 0;
+        padding: 0;
+        color: #333;
+      }
+      .top-bar {
+        background-color: #ef5350;
+        padding: 15px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      .top-bar a {
+        color: white;
+        text-decoration: none;
+        font-weight: bold;
+        margin-right: 20px;
+        font-size: 16px;
+      }
+      .top-bar a:hover {
+        text-decoration: underline;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 30px auto;
+        padding: 0 20px;
+      }
+      /* ستايل الفورمات الجديد لتحسين الـ UI */
+      .auth-form {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        max-width: 400px;
+        margin: 50px auto;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      }
+      .auth-form h2 {
+        margin-top: 0;
+        color: #333;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+      }
+      .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-size: 14px;
+      }
+      .form-group input:focus {
+        border-color: #ef5350;
+        outline: none;
+      }
+      .btn {
+        background-color: #ef5350;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        width: 100%;
+      }
+      .btn:hover {
+        background-color: #e53935;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="top-bar">
+      <div>
+        <a href="{% url 'pokemon_list' %}" style="font-size: 20px"
+          >🎒 Pokémon Explorer</a
+        >
+      </div>
+      <div>
+        <a href="{% url 'pokemon_list' %}">Home</a>
+        <a href="/favorites/">Favorites</a>
+        {% if user.is_authenticated %}
+        <span style="color: white; margin-left: 15px"
+          >Hi, {{ user.username }}</span
+        >
+        {% else %}
+        <a href="/login/">Login</a>
+        {% endif %}
+      </div>
+    </nav>
+
+    <div class="container">{% block content %} {% endblock %}</div>
+  </body>
+</html>

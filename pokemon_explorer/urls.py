@@ -1,14 +1,22 @@
 from django.contrib import admin
 from django.urls import path
-from pokemons.views import *
+from pokemons.views import (
+    HomeView,
+    PokemonDetailView,
+    ToggleFavoriteView,
+    RegisterView,
+    LoginView,
+    LogoutView,
+    FavoritesListView,
+)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', home_view, name='home'),
-    path('pokemon/<int:pokemon_id>/', pokemon_detail_view, name='pokemon_detail'),
-    path('favorite/<int:pokemon_id>/', toggle_favorite_view, name='toggle_favorite'),
-    path('register/', register_view, name='register'),
-    path('login/', login_view, name='login'),
-    path('logout/', logout_view, name='logout'),
-    path('favorites/', favorites_list_view, name='favorites_list'),
+    path("admin/", admin.site.urls),
+    path("", HomeView.as_view(), name="home"),
+    path("pokemon/<int:pokemon_id>/", PokemonDetailView.as_view(), name="pokemon_detail"),
+    path("favorite/<int:pokemon_id>/", ToggleFavoriteView.as_view(), name="toggle_favorite"),
+    path("register/", RegisterView.as_view(), name="register"),
+    path("login/", LoginView.as_view(), name="login"),
+    path("logout/", LogoutView.as_view(), name="logout"),
+    path("favorites/", FavoritesListView.as_view(), name="favorites_list"),
 ]
