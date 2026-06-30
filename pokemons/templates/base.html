@@ -4,106 +4,209 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pokémon Explorer</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      /* كود الـ CSS مفصول ومنظم هنا لمنع الـ Inlining وحل مشكلة الفورمات */
+      :root {
+        --primary: #4f46e5;
+        --primary-hover: #4338ca;
+        --bg-main: #f8fafc;
+        --bg-card: #ffffff;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --border-color: #e2e8f0;
+        --radius: 12px;
+        --danger: #ef4444;
+        --success: #10b981;
+      }
       body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f5f7fa;
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-main);
         margin: 0;
         padding: 0;
-        color: #333;
+        color: var(--text-main);
       }
       .top-bar {
-        background-color: #ef5350;
-        padding: 15px 30px;
+        background-color: var(--bg-card);
+        padding: 16px 40px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        border-bottom: 1px solid var(--border-color);
       }
       .top-bar a {
-        color: white;
+        color: var(--text-muted);
         text-decoration: none;
-        font-weight: bold;
-        margin-right: 20px;
-        font-size: 16px;
+        font-weight: 500;
+        margin-left: 24px;
+        font-size: 14px;
+        transition: color 0.2s;
       }
       .top-bar a:hover {
-        text-decoration: underline;
+        color: var(--primary);
+      }
+      .brand {
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        color: var(--primary) !important;
+        margin-left: 0 !important;
       }
       .container {
         max-width: 1200px;
-        margin: 30px auto;
-        padding: 0 20px;
+        margin: 40px auto;
+        padding: 0 24px;
       }
-      /* ستايل الفورمات الجديد لتحسين الـ UI */
-      .auth-form {
-        background: white;
-        padding: 30px;
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 24px;
+        margin-top: 32px;
+      }
+
+      .card {
+        background: var(--bg-card);
+        padding: 24px;
+        border-radius: var(--radius);
+        text-align: center;
+        border: 1px solid var(--border-color);
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+      }
+      .card img {
+        width: 140px;
+        height: 140px;
+        object-fit: contain;
+        margin-bottom: 16px;
+      }
+      .card h3 {
+        margin: 12px 0;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .btn {
+        background-color: var(--primary);
+        color: white;
+        padding: 10px 20px;
+        border: none;
         border-radius: 8px;
-        max-width: 400px;
-        margin: 50px auto;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        transition: background 0.2s;
       }
-      .auth-form h2 {
-        margin-top: 0;
-        color: #333;
+      .btn:hover {
+        background-color: var(--primary-hover);
+      }
+      .btn-secondary {
+        background-color: var(--text-muted);
+      }
+      .btn-secondary:hover {
+        background-color: #475569;
+      }
+
+      .auth-form {
+        background: var(--bg-card);
+        padding: 40px;
+        border-radius: var(--radius);
+        max-width: 420px;
+        margin: 40px auto;
+        border: 1px solid var(--border-color);
       }
       .form-group {
-        margin-bottom: 15px;
+        margin-bottom: 20px;
+        text-align: left;
       }
       .form-group label {
         display: block;
-        margin-bottom: 5px;
-        font-weight: 600;
+        margin-bottom: 6px;
+        font-weight: 500;
+        font-size: 13px;
+        color: var(--text-muted);
       }
       .form-group input {
         width: 100%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
         box-sizing: border-box;
         font-size: 14px;
       }
       .form-group input:focus {
-        border-color: #ef5350;
+        border-color: var(--primary);
         outline: none;
       }
-      .btn {
-        background-color: #ef5350;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        width: 100%;
+
+      .errorlist {
+        color: var(--danger);
+        background: #fef2f2;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: 20px;
+        list-style-type: none;
       }
-      .btn:hover {
-        background-color: #e53935;
+      .helptext {
+        display: block;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin-top: 40px;
+      }
+      .pagination a,
+      .pagination span {
+        padding: 8px 16px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        text-decoration: none;
+        color: var(--text-muted);
+        background: var(--bg-card);
+        font-size: 14px;
+      }
+      .pagination .active {
+        background-color: var(--primary);
+        color: white;
+        border-color: var(--primary);
       }
     </style>
   </head>
   <body>
     <nav class="top-bar">
       <div>
-        <a href="{% url 'pokemon_list' %}" style="font-size: 20px"
-          >🎒 Pokémon Explorer</a
-        >
+        <a href="{% url 'home' %}" class="brand">🎒 Pokémon Explorer</a>
       </div>
       <div>
-        <a href="{% url 'pokemon_list' %}">Home</a>
-        <a href="/favorites/">Favorites</a>
+        <a href="{% url 'home' %}">Home</a>
         {% if user.is_authenticated %}
-        <span style="color: white; margin-left: 15px"
-          >Hi, {{ user.username }}</span
+        <a href="{% url 'favorites_list' %}">Favorites</a>
+        <span
+          style="color: var(--text-main); margin-left: 24px; font-weight: 600"
+          >👤 {{ user.username }}</span
         >
+        <a href="{% url 'logout' %}" style="color: var(--danger)">Logout</a>
         {% else %}
-        <a href="/login/">Login</a>
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'register' %}">Register</a>
         {% endif %}
       </div>
     </nav>
-
-    <div class="container">{% block content %} {% endblock %}</div>
+    <div class="container">{% block content %}{% endblock %}</div>
   </body>
 </html>

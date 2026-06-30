@@ -1,534 +1,74 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PokéExplorer - Home</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <style>
-      @keyframes fade-in {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
+{% extends 'base.html' %} {% block content %}
+<h2 style="margin-bottom: 24px">Search and Explore Pokémon</h2>
 
-      @keyframes slide-in-left {
-        from {
-          opacity: 0;
-          transform: translateX(-30px);
-        }
-        to {
-          opacity: 1;
-          transform: translateX(0);
-        }
-      }
+<form
+  method="get"
+  action="{% url 'home' %}"
+  style="margin-bottom: 32px; display: flex; gap: 12px"
+>
+  <input
+    type="text"
+    name="search"
+    value="{{ query_name }}"
+    placeholder="Search by name... (e.g., Pikachu)"
+    style="
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 14px;
+    "
+  />
+  <button type="submit" class="btn" style="padding: 0 32px">Search</button>
+</form>
 
-      @keyframes gradient-shift {
-        0%,
-        100% {
-          background-position: 0% 50%;
-        }
-        50% {
-          background-position: 100% 50%;
-        }
-      }
-
-      @keyframes card-hover {
-        0% {
-          transform: translateY(0);
-        }
-        50% {
-          transform: translateY(-3px);
-        }
-        100% {
-          transform: translateY(0);
-        }
-      }
-
-      @keyframes shimmer {
-        0% {
-          background-position: -1000px 0;
-        }
-        100% {
-          background-position: 1000px 0;
-        }
-      }
-
-      :root {
-        --primary: #0f172a;
-        --primary-light: #1e293b;
-        --accent: #06b6d4;
-        --accent-light: #22d3ee;
-        --gold: #f59e0b;
-        --success: #10b981;
-        --error: #ef4444;
-        --text: #f1f5f9;
-        --text-muted: #cbd5e1;
-        --surface: #ffffff;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html {
-        scroll-behavior: smooth;
-      }
-
-      body {
-        min-height: 100vh;
-        margin: 0;
-        background: linear-gradient(135deg, var(--primary) 0%, #1a2e4a 100%);
-        color: var(--text);
-        font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      }
-
-      .navbar {
-        background: rgba(15, 23, 42, 0.95);
-        backdrop-filter: blur(20px);
-        border-bottom: 1px solid rgba(6, 182, 212, 0.1);
-        animation: fade-in 0.6s ease-out;
-      }
-
-      .navbar-brand {
-        letter-spacing: 0.05em;
-        font-size: 1.5rem !important;
-        background: linear-gradient(135deg, var(--accent), var(--gold));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-
-      .btn-outline-light {
-        border-color: rgba(241, 245, 249, 0.2);
-        color: var(--text-muted);
-        transition: all 0.3s ease;
-      }
-
-      .btn-outline-light:hover {
-        border-color: var(--accent);
-        color: var(--accent-light);
-        background: rgba(6, 182, 212, 0.1);
-      }
-
-      .btn-warning {
-        background: linear-gradient(135deg, var(--gold), #d97706) !important;
-        border: none;
-        color: #000 !important;
-        font-weight: 700;
-        transition: all 0.3s ease;
-      }
-
-      .btn-warning:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
-      }
-
-      .glass-card {
-        background: rgba(30, 41, 59, 0.6);
-        border: 1px solid rgba(6, 182, 212, 0.15);
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        border-radius: 20px;
-        animation: fade-in 0.8s ease-out;
-      }
-
-      .glass-card::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          135deg,
-          transparent,
-          rgba(6, 182, 212, 0.05)
-        );
-        border-radius: 20px;
-        pointer-events: none;
-      }
-
-      .search-panel {
-        background: rgba(30, 41, 59, 0.4);
-        border: 2px solid rgba(6, 182, 212, 0.2);
-        border-radius: 20px;
-        animation: slide-in-left 0.8s ease-out 0.2s both;
-        transition: all 0.3s ease;
-      }
-
-      .search-panel:hover {
-        border-color: rgba(6, 182, 212, 0.4);
-        background: rgba(30, 41, 59, 0.5);
-      }
-
-      .search-bar {
-        background: rgba(15, 23, 42, 0.5);
-        border: 1.5px solid rgba(6, 182, 212, 0.2);
-        border-radius: 12px;
-        color: var(--text);
-        padding: 0.95rem 1.2rem;
-        font-size: 0.95rem;
-        transition: all 0.3s ease;
-      }
-
-      .search-bar:focus {
-        border-color: var(--accent);
-        background: rgba(15, 23, 42, 0.8);
-        box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
-      }
-
-      .search-bar::placeholder {
-        color: var(--text-muted);
-      }
-
-      .search-btn {
-        background: linear-gradient(135deg, var(--accent), #0891b2);
-        border: none;
-        color: var(--primary);
-        font-weight: 700;
-        padding: 0.95rem 2rem;
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(6, 182, 212, 0.3);
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-size: 0.85rem;
-      }
-
-      .search-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 30px rgba(6, 182, 212, 0.4);
-      }
-
-      .search-btn:active {
-        transform: translateY(-1px);
-      }
-
-      .poke-card {
-        border: 1px solid rgba(6, 182, 212, 0.15);
-        border-radius: 16px;
-        background: var(--surface);
-        overflow: hidden;
-        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        animation: fade-in 0.6s ease-out backwards;
-      }
-
-      .poke-card:hover {
-        transform: translateY(-12px);
-        box-shadow:
-          0 30px 60px rgba(6, 182, 212, 0.15),
-          0 0 40px rgba(6, 182, 212, 0.1);
-        border-color: rgba(6, 182, 212, 0.3);
-      }
-
-      .img-container {
-        background: linear-gradient(
-          135deg,
-          rgba(6, 182, 212, 0.08),
-          rgba(245, 158, 11, 0.03)
-        );
-        border-bottom-left-radius: 50% 100%;
-        border-bottom-right-radius: 50% 100%;
-        padding: 30px 20px 20px;
-        text-align: center;
-        overflow: hidden;
-        position: relative;
-      }
-
-      .img-container img {
-        max-height: 140px;
-        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        filter: drop-shadow(0 4px 8px rgba(6, 182, 212, 0.1));
-      }
-
-      .poke-card:hover .img-container img {
-        transform: scale(1.08) rotate(5deg);
-      }
-
-      .badge-id {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.5rem 0.9rem;
-        background: linear-gradient(
-          135deg,
-          rgba(6, 182, 212, 0.1),
-          rgba(245, 158, 11, 0.05)
-        );
-        color: var(--primary);
-        border: 1px solid rgba(6, 182, 212, 0.2);
-        border-radius: 20px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-      }
-
-      .card-title {
-        text-transform: capitalize;
-        color: var(--primary);
-        font-weight: 800;
-      }
-
-      .card-body {
-        padding: 1.8rem;
-      }
-
-      .fav-btn,
-      .btn-outline-secondary {
-        transition: all 0.3s ease;
-        font-weight: 600;
-        border-radius: 10px;
-      }
-
-      .fav-btn:hover,
-      .btn-outline-secondary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-      }
-
-      .btn-danger {
-        background: linear-gradient(135deg, var(--error), #dc2626) !important;
-        border: none;
-      }
-
-      .btn-outline-secondary {
-        border: 2px solid var(--primary-light);
-        color: var(--primary);
-      }
-
-      .btn-outline-secondary:hover {
-        background: var(--primary);
-        color: var(--text);
-        border-color: var(--accent);
-      }
-
-      .pager-wrapper {
-        display: inline-flex;
-        gap: 1rem;
-        padding: 1rem 1.5rem;
-        background: rgba(30, 41, 59, 0.4);
-        border: 1px solid rgba(6, 182, 212, 0.15);
-        border-radius: 16px;
-        animation: fade-in 0.6s ease-out 0.4s both;
-      }
-
-      .page-link-ajax {
-        min-width: 140px;
-        background: linear-gradient(
-          135deg,
-          transparent,
-          rgba(6, 182, 212, 0.05)
-        );
-        border: 2px solid rgba(6, 182, 212, 0.2);
-        color: var(--text);
-        transition: all 0.3s ease;
-        font-weight: 600;
-        border-radius: 10px;
-      }
-
-      .page-link-ajax:hover {
-        border-color: var(--accent);
-        background: rgba(6, 182, 212, 0.1);
-        transform: translateY(-2px);
-      }
-
-      .empty-state {
-        min-height: 280px;
-        animation: fade-in 0.8s ease-out;
-      }
-
-      .empty-state i {
-        color: rgba(6, 182, 212, 0.3);
-        font-size: 4rem;
-        margin-bottom: 1rem;
-      }
-
-      @media (max-width: 575.98px) {
-        .navbar-brand {
-          font-size: 1.25rem !important;
-        }
-        .poke-card:hover {
-          transform: translateY(-8px);
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm mb-4">
-      <div class="container">
-        <a class="navbar-brand fw-bold fs-4" href="{% url 'home' %}">
-          <i class="text-warning fa-solid fa-bolt me-2"></i>PokéExplorer
-        </a>
-        <div class="ms-auto d-flex align-items-center gap-2">
-          {% if user.is_authenticated %}
-          <span
-            class="text-white-50 me-3 d-none d-sm-inline-flex align-items-center"
-          >
-            <a
-              href="{% url 'favorites_list' %}"
-              class="btn btn-sm btn-warning text-dark me-3 px-3 rounded-pill fw-bold"
-              ><i class="fa-solid fa-heart me-1"></i> My Favorites</a
-            >
-            <i class="fa-solid fa-user me-1"></i> Hello,
-            <strong class="text-white ms-1">{{ user.username }}</strong>
-          </span>
-          <a
-            href="{% url 'logout' %}"
-            class="btn btn-sm btn-outline-light px-3 rounded-pill"
-            >Logout</a
-          >
-          {% else %}
-          <a
-            href="{% url 'login' %}"
-            class="btn btn-sm btn-outline-light me-2 px-3 rounded-pill"
-            >Login</a
-          >
-          <a
-            href="{% url 'register' %}"
-            class="btn btn-sm btn-warning text-dark px-3 rounded-pill fw-bold"
-            >Register</a
-          >
-          {% endif %}
-        </div>
-      </div>
-    </nav>
-
-    <div class="container my-5">
-      <div class="row justify-content-center mb-5">
-        <div class="col-xl-10">
-          <div
-            class="p-4 p-md-5 rounded-4 glass-card overflow-hidden shadow-lg"
-          >
-            <div
-              class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-4"
-            >
-              <div>
-                <h1 class="display-6 fw-bold text-white mb-3">
-                  Discover the world of Pokémon in a premium explorer
-                  experience.
-                </h1>
-                <p class="lead text-white-75 mb-0">
-                  Search, browse, and favorite your top Pokémon with
-                  silky-smooth interactions and a clean modern interface.
-                </p>
-              </div>
-              <div class="text-lg-end">
-                <span
-                  class="badge bg-white text-dark rounded-pill px-4 py-2 fw-semibold shadow-sm"
-                >
-                  Explorer Ready
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="row justify-content-center mb-4">
-        <div class="col-xl-8">
-          <form
-            method="GET"
-            action="{% url 'home' %}"
-            class="search-panel p-4 rounded-4 shadow-sm bg-white border border-2 border-opacity-10"
-          >
-            <div
-              class="d-flex flex-column flex-md-row gap-3 align-items-center"
-            >
-              <div class="flex-grow-1">
-                <label class="visually-hidden" for="pokemon-search"
-                  >Search Pokémon</label
-                >
-                <input
-                  type="text"
-                  id="pokemon-search"
-                  name="search"
-                  class="form-control search-bar"
-                  placeholder="Search Pokémon by name..."
-                  value="{{ query_name }}"
-                />
-              </div>
-              <button type="submit" class="btn search-btn fw-bold px-4 py-2">
-                <i class="fa-solid fa-magnifying-glass me-2"></i> Search
-              </button>
-            </div>
-            {% if query_name %}
-            <div class="mt-3 text-end">
-              <a
-                href="{% url 'home' %}"
-                class="clear-search text-decoration-none"
-              >
-                <i class="fa-solid fa-rotate-left me-1"></i> Clear search
-              </a>
-            </div>
-            {% endif %}
-          </form>
-        </div>
-      </div>
-
-      <div id="main-content-container">
-        {% include 'pokemons/pokemon_list_partial.html' %}
-      </div>
+<div class="grid">
+  {% for p in pokemons %}
+  <div class="card">
+    <img src="{{ p.image }}" alt="{{ p.name }}" />
+    <h3>{{ p.name }}</h3>
+    <div
+      style="margin-top: 16px; display: flex; gap: 8px; justify-content: center"
+    >
+      <a
+        href="{% url 'pokemon_detail' p.id %}"
+        class="btn"
+        style="font-size: 13px; padding: 8px 16px"
+        >View Details</a
+      >
+      {% if user.is_authenticated %}
+      <a
+        href="{% url 'toggle_favorite' p.id %}"
+        class="btn"
+        style="background-color: {% if p.is_favorite %}#fee2e2{% else %}#f1f5f9{% endif %}; color: {% if p.is_favorite %}var(--danger){% else %}var(--text-muted){% endif %}; font-size: 13px; padding: 8px 16px;"
+      >
+        {% if p.is_favorite %}❤️{% else %}🤍{% endif %}
+      </a>
+      {% endif %}
     </div>
+  </div>
+  {% empty %}
+  <p
+    style="
+      color: var(--text-muted);
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 40px;
+    "
+  >
+    No Pokémon found.
+  </p>
+  {% endfor %}
+</div>
 
-    <script>
-      const container = document.getElementById("main-content-container");
-
-      function initAppEvents() {
-        document.querySelectorAll(".fav-btn").forEach((button) => {
-          button.onclick = function (event) {
-            event.preventDefault();
-            const url = this.getAttribute("href");
-            const btn = this;
-
-            fetch(url)
-              .then((response) => response.json())
-              .then((data) => {
-                if (data.status === "success") {
-                  if (data.action === "added") {
-                    btn.className =
-                      "btn btn-danger btn-sm w-100 fav-btn py-2 rounded-pill";
-                    btn.innerHTML =
-                      '<i class="fa-solid fa-heart me-1"></i> Remove Favorite';
-                  } else if (data.action === "removed") {
-                    btn.className =
-                      "btn btn-outline-danger btn-sm w-100 fav-btn py-2 rounded-pill";
-                    btn.innerHTML =
-                      '<i class="fa-regular fa-heart me-1"></i> Add Favorite';
-                  }
-                }
-              })
-              .catch((err) => console.error(err));
-          };
-        });
-
-        document.querySelectorAll(".page-link-ajax").forEach((link) => {
-          link.onclick = function (event) {
-            event.preventDefault();
-            const url = this.getAttribute("href");
-
-            fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
-              .then((response) => response.text())
-              .then((html) => {
-                container.innerHTML = html;
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                initAppEvents();
-              })
-              .catch((err) => console.error(err));
-          };
-        });
-      }
-
-      initAppEvents();
-    </script>
-  </body>
-</html>
+{% if total_pages > 1 %}
+<div class="pagination">
+  {% if has_prev %}
+  <a href="?page={{ prev_page }}&search={{ query_name }}">« Previous</a>
+  {% endif %}
+  <span class="active">Page {{ current_page }} of {{ total_pages }}</span>
+  {% if has_next %}
+  <a href="?page={{ next_page }}&search={{ query_name }}">Next »</a>
+  {% endif %}
+</div>
+{% endif %} {% endblock %}

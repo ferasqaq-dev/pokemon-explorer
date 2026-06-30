@@ -1,138 +1,122 @@
 import requests
-from django.contrib.auth import login, logout
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.cache import cache
-from django.http import JsonResponse
-from django.shortcuts import redirect, render
-from django.utils.decorators import method_decorator
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
-from django.views.generic import DetailView, FormView, TemplateView
-
-from pokemons.models import FavoritePokemon
-
+from django.views.generic import TemplateView, FormView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import login, logout
+from django.urls import reverse_lazy
+from pokemons.models import Pokemon, FavoritePokemon
 
 class HomeView(TemplateView):
     template_name = "pokemons/home.html"
 
-    def get_template_names(self):
-        # لدعم الـ Ajax Request والـ partial template كما كان في كودك القديم
-        if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return ["pokemons/pokemon_list_partial.html"]
-        return [self.template_name]
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         request = self.request
-
         query_name = request.GET.get("search", "").strip().lower()
-        offset = request.GET.get("offset", "0")
-        limit = 20
-        cache_key = f"pokeapi_offset_{offset}_limit_{limit}"
-        response = cache.get(cache_key)
 
-        if not response:
-            url = (
-                "https://pokeapi.co/api/v2/pokemon?limit=150"
-                if query_name
-                else f"https://pokeapi.co/api/v2/pokemon?limit={limit}&offset={offset}"
-            )
-            try:
-                response = requests.get(url).json()
-                if not query_name:
-                    cache.set(cache_key, response, timeout=300)
-            except Exception:
-                response = {"results": []}
+        queryset = Pokemon.objects.all().order_by("pokemon_id")
+        if query_name:
+            queryset = queryset.filter(name__icontains=query_name)
+
+        limit = 12
+        page = int(request.GET.get("page", "1"))
+        total_count = queryset.count()
+        total_pages = (total_count + limit - 1) // limit
+
+        offset = (page - 1) * limit
+        paginated_queryset = queryset[offset : offset + limit]
 
         user_favs = []
         if request.user.is_authenticated:
-            user_favs = list(
-                FavoritePokemon.objects.filter(user=request.user).values_list(
-                    "pokemon_id", flat=True
-                )
-            )
+            user_favs = list(FavoritePokemon.objects.filter(user=request.user).values_list("pokemon_id", flat=True))
 
         pokemon_list = []
-        for result in response.get("results", []):
-            name = result["name"]
+        for p in paginated_queryset:
+            pokemon_list.append({
+                "id": p.pokemon_id,
+                "name": p.name.capitalize(),
+                "image": p.image,
+                "is_favorite": p.pokemon_id in user_favs,
+            })
 
-            if query_name and query_name not in name:
-                continue
-
-            pokemon_id = int(result["url"].split("/")[-2])
-            image_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{pokemon_id}.png"
-
-            pokemon_list.append(
-                {
-                    "id": pokemon_id,
-                    "name": name.capitalize(),
-                    "image": image_url,
-                    "is_favorite": pokemon_id in user_favs,
-                }
-            )
-
-        current_offset = int(offset)
-        next_offset = current_offset + limit if response.get("next") else None
-        prev_offset = current_offset - limit if current_offset >= limit else None
-
-        context.update(
-            {
-                "pokemons": pokemon_list,
-                "query_name": request.GET.get("search", ""),
-                "next_offset": next_offset,
-                "prev_offset": prev_offset,
-            }
-        )
+        context.update({
+            "pokemons": pokemon_list,
+            "query_name": request.GET.get("search", ""),
+            "current_page": page,
+            "total_pages": total_pages,
+            "has_next": page < total_pages,
+            "has_prev": page > 1,
+            "next_page": page + 1,
+            "prev_page": page - 1,
+            "total_count": total_count,
+        })
         return context
-
 
 class PokemonDetailView(View):
     def get(self, request, pokemon_id):
-        url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_id}/"
-        response = requests.get(url).json()
-
-        name = response["name"].capitalize()
-        height = response["height"]
-        weight = response["weight"]
-        image = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/{pokemon_id}.png"
-        types = [t["type"]["name"].capitalize() for t in response["types"]]
-        abilities = [
-            a["ability"]["name"].capitalize() for a in response["abilities"]
-        ]
-
+        pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
         is_favorite = False
         if request.user.is_authenticated:
-            is_favorite = FavoritePokemon.objects.filter(
-                user=request.user, pokemon_id=pokemon_id
-            ).exists()
+            is_favorite = FavoritePokemon.objects.filter(user=request.user, pokemon_id=pokemon_id).exists()
 
         context = {
-            "id": pokemon_id,
-            "name": name,
-            "height": height,
-            "weight": weight,
-            "image": image,
-            "types": types,
-            "abilities": abilities,
+            "id": pokemon.pokemon_id,
+            "name": pokemon.name.capitalize(),
+            "height": pokemon.height,
+            "weight": pokemon.weight,
+            "image": pokemon.image,
+            "types": pokemon.types if pokemon.types else "Normal",
+            "abilities": pokemon.abilities if pokemon.abilities else "None",
             "is_favorite": is_favorite,
         }
         return render(request, "pokemons/detail.html", context)
 
+class ToggleFavoriteView(LoginRequiredMixin, View):
+    def get(self, request, pokemon_id):
+        pokemon = get_object_or_404(Pokemon, pokemon_id=pokemon_id)
+        fav, created = FavoritePokemon.objects.get_or_create(
+            user=request.user,
+            pokemon_id=pokemon_id,
+            defaults={"pokemon_name": pokemon.name, "pokemon_obj": pokemon}
+        )
+        if not created:
+            fav.delete()
+        return redirect(request.META.get('HTTP_REFERER', '/'))
+
+class FavoritesListView(LoginRequiredMixin, TemplateView):
+    template_name = "pokemons/favorites.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        fav_objects = FavoritePokemon.objects.filter(user=self.request.user)
+        pokemons = []
+        for fav in fav_objects:
+            # نضمن سحب الصورة والبيانات الأساسية حتى لو مخزنة في الـ Favorite
+            p_obj = fav.pokemon_obj
+            pokemons.append({
+                "id": fav.pokemon_id,
+                "name": fav.pokemon_name.capitalize(),
+                "image": p_obj.image if p_obj else "",
+            })
+        context["pokemons"] = pokemons
+        return context
 
 class RegisterView(FormView):
     template_name = "pokemons/register.html"
     form_class = UserCreationForm
+    success_url = reverse_lazy("home")
 
     def form_valid(self, form):
         user = form.save()
         login(self.request, user)
-        return redirect("home")
-
+        return redirect("/")
 
 class LoginView(FormView):
     template_name = "pokemons/login.html"
     form_class = AuthenticationForm
+    success_url = reverse_lazy("home")
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -142,64 +126,9 @@ class LoginView(FormView):
     def form_valid(self, form):
         user = form.get_user()
         login(self.request, user)
-        return redirect("home")
-
+        return redirect("/")
 
 class LogoutView(View):
     def get(self, request):
         logout(request)
-        return redirect("home")
-
-    def post(self, request):
-        logout(request)
-        return redirect("home")
-
-
-class ToggleFavoriteView(LoginRequiredMixin, View):
-    login_url = "login"
-
-    def get(self, request, pokemon_id):
-        pokemon_name = request.GET.get("name", "Pokemon")
-
-        fav_exists = FavoritePokemon.objects.filter(
-            user=request.user, pokemon_id=pokemon_id
-        ).exists()
-
-        if fav_exists:
-            FavoritePokemon.objects.filter(
-                user=request.user, pokemon_id=pokemon_id
-            ).delete()
-            action = "removed"
-        else:
-            FavoritePokemon.objects.create(
-                user=request.user,
-                pokemon_id=pokemon_id,
-                pokemon_name=pokemon_name,
-            )
-            action = "added"
-
-        return JsonResponse({"status": "success", "action": action})
-
-
-class FavoritesListView(LoginRequiredMixin, TemplateView):
-    login_url = "login"
-    template_name = "pokemons/favorites.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        fav_objects = FavoritePokemon.objects.filter(user=self.request.user)
-
-        pokemons = []
-        for fav in fav_objects:
-            image_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{fav.pokemon_id}.png"
-            pokemons.append(
-                {
-                    "id": fav.pokemon_id,
-                    "name": fav.pokemon_name,
-                    "image": image_url,
-                    "is_favorite": True,
-                }
-            )
-
-        context["pokemons"] = pokemons
-        return context
+        return redirect("/")
